@@ -3,6 +3,7 @@ const app = express();
 const port = 3000;
 const hostname = "localhost";
 const userRoutes = require('./routes/user');
+const cors = require('cors');
 const mongoose = require('mongoose');
 mongoose.connect('mongodb+srv://habibjeux:giftLJACca2JmmEo@cluster0.rxzsank.mongodb.net/?retryWrites=true&w=majority',
 { 
@@ -18,6 +19,7 @@ app.use((_, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
     next();
 });
+app.use(cors());
 app.use(express.json());
 app.use("/auth", userRoutes)
 
