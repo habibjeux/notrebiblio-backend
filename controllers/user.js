@@ -12,17 +12,19 @@ module.exports.login = (req, res) => {
                 .then(isMatch => {
                     if(!isMatch) 
                         return res.status(400).json({error: 'Invalid password'});
-                    const token = jwt.sign({userId: user._id}, ENV.JWT_SECRET, { expiresIn: "60s" })
-                    res.status(200).json({
+                    const token = jwt.sign({userId: user._id}, ENV.JWT_SECRET)
+                    res
+                        .cookie('access_token', token, {httpOnly: true, maxAge: 1000 * 3600 * 24})
+                        .status(200).json({
                         message: "Logged in successfully",
                         email: user.email,
-                        token
+                        role: user.role
                     });                           
                 })
-                .catch((err) => res.status(400).json({error : "Failed"}));
+                .catch((err) => res.status(400).json({ err }));
             
         })
-        .catch((err) => res.status(500).json({error : "Failed to check server"}));
+        .catch((err) => res.status(500).json({ err }));
 
 }
 
