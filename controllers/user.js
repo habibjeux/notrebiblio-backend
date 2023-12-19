@@ -2,7 +2,19 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const ENV = require('../config');
+const { json } = require('express');
 
+const verifyPassword = (password) => {
+    if (password.length < 8) 
+        return false;
+    const hasLowercase = /[a-z]/.test(password);
+    if(!hasLowercase)
+        return false;
+    const hasUppercase = /[A-Z]/.test(password); 
+    if (!hasUppercase) 
+        return false; 
+    return true;
+}
 module.exports.login = (req, res) => {
     User.findOne({email: req.body.email})
         .then(user => {
@@ -29,15 +41,34 @@ module.exports.login = (req, res) => {
 }
 
 module.exports.signup = (req, res) => {
-    bcrypt.hash(req.body.password, 10)
-        .then(hash => {
-            const user = new User({
-                email: req.body.email,
-                password: hash,
-            });
-            user.save()
-                .then(() => res.status(201).json({message : 'User created successfully'}))
+    User.findOne({email: req.body.email})
+        .then(user => {
+            if(user) {
+                res.status(400).json({ error : 'User already exists'});
+                return
+            }
+            if(!verifyPassword(req.body.password)) {
+                res.status(400).json({ error : 'Invalid password'});
+                return;
+            }
+            bcrypt.hash(req.body.password, 10)
+                .then(hash => {
+                    const user = new User({
+                        email: req.body.email,
+                        password: hash,
+                    });
+                    user.save()
+                        .then(() => res.status(201).json({message : 'User created successfully'}))
+                        .catch(err => res.status(400).json({error: err}));
+                })
                 .catch(err => res.status(400).json({err}));
         })
-        .catch(err => res.status(400).json({err}));
+        .catch(err => res.status(500).json({ error : err }));
+   
 };
+
+module.exports.getUsers = (req, res) => {
+    User.find()
+       .then(users => res.status(200).json(users))
+       .catch(err => res.status(400).json({err}));
+} 
