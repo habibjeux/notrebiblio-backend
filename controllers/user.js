@@ -8,7 +8,7 @@ module.exports.login = (req, res) => {
     User.findOne({email: req.body.email})
         .then(user => {
             if(!user) 
-                return res.json({error: 'Email et/ou mot de passe incorrect(s)'});
+                return res.json({error: 'Not found'});
             bcrypt.compare(req.body.password, user.password)
                 .then(isMatch => {
                     if(!isMatch) 
@@ -18,8 +18,9 @@ module.exports.login = (req, res) => {
                         .cookie('access_token', token, {httpOnly: true, maxAge: 1000 * 3600 * 24})
                         .json({
                         message: "Connexion avec succès",
+                        id: user._id,
                         email: user.email,
-                        role: user.role
+                        role: user.type
                     });                           
                 })
                 .catch((err) => res.status(500).json({ err }));
@@ -51,6 +52,14 @@ module.exports.signup = (req, res) => {
         .catch(err => res.status(500).json({ error : err }));
    
 };
+
+module.exports.logoutUser = (req, res) => {
+    res.cookie('access_token', '', {
+       httpOnly: true,
+       expires: new Date(0) 
+    });
+    res.json({message: 'Utilisateur déconnecté'});
+}
 
 module.exports.getUsers = (req, res) => {
     User.find()
