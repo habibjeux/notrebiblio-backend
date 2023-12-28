@@ -2,7 +2,6 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const ENV = require('../config');
-const { json } = require('express');
 
 module.exports.login = (req, res) => {
     User.findOne({email: req.body.email})
@@ -13,15 +12,10 @@ module.exports.login = (req, res) => {
                 .then(isMatch => {
                     if(!isMatch) 
                         return res.json({error: 'Email et/ou mot de passe incorrect(s)'});
-                    const token = jwt.sign({userId: user._id}, ENV.JWT_SECRET)
+                    const token = jwt.sign({_id: user._id, prenom: user.prenom, nom: user.nom, username: user.username, email: user.email, role: user.role}, ENV.JWT_SECRET)
                     res
                         .cookie('access_token', token, {httpOnly: true, maxAge: 1000 * 3600 * 24})
-                        .json({
-                        message: "Connexion avec succès",
-                        id: user._id,
-                        email: user.email,
-                        role: user.type
-                    });                           
+                        .json({ message: "Connexion avec succès" });                           
                 })
                 .catch((err) => res.status(500).json({ err }));
             
@@ -37,9 +31,18 @@ module.exports.signup = (req, res) => {
                 res.json({ error : 'Email déjà utilisé'});
                 return
             }
-            bcrypt.hash(req.body.password, 10)
+            User.findOne({username: req.body.username})
+            .then(user => {
+                if(user) {
+                    res.json({ error : 'Pseudo déjà utilisé'});
+                    return
+                }
+                bcrypt.hash(req.body.password, 10)
                 .then(hash => {
                     const user = new User({
+                        prenom: req.body.prenom,
+                        nom: req.body.nom,
+                        username: req.body.username,
                         email: req.body.email,
                         password: hash,
                     });
@@ -48,6 +51,8 @@ module.exports.signup = (req, res) => {
                         .catch(err => res.status(400).json({error: err}));
                 })
                 .catch(err => res.status(400).json({err}));
+            })
+            .catch(err => res.status(500).json({ error : err }));
         })
         .catch(err => res.status(500).json({ error : err }));
    
@@ -61,8 +66,13 @@ module.exports.logoutUser = (req, res) => {
     res.json({message: 'Utilisateur déconnecté'});
 }
 
+module.exports.profile = (req, res) => {
+    res.json(req.user);
+}
+
 module.exports.getUsers = (req, res) => {
     User.find()
        .then(users => res.status(200).json(users))
        .catch(err => res.status(400).json({err}));
 } 
+
