@@ -7,7 +7,7 @@ module.exports.login = (req, res) => {
     User.findOne({email: req.body.email})
         .then(user => {
             if(!user) 
-                return res.json({error: 'Not found'});
+                return res.json({error: "L'utilisateur n'existe pas!"});
             bcrypt.compare(req.body.password, user.password)
                 .then(isMatch => {
                     if(!isMatch) 
@@ -17,10 +17,10 @@ module.exports.login = (req, res) => {
                         .cookie('access_token', token, {httpOnly: true, maxAge: 1000 * 3600 * 24})
                         .json({ message: "Connexion avec succès" });                           
                 })
-                .catch((err) => res.status(500).json({ err }));
+                .catch(() => res.status(500).json({ error: "Erreur coté serveur" }));
             
         })
-        .catch((err) => res.status(500).json({ err }));
+        .catch(() => res.status(500).json({ error: "Erreur côté serveur" }));
 
 }
 
