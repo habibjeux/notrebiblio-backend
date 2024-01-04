@@ -4,6 +4,7 @@ const port = 3000;
 const ENV = require('./config');
 const hostname = "localhost";
 const userRoutes = require('./routes/user');
+const mailRoutes = require('./routes/mail');
 const cors = require('cors');
 
 
@@ -18,7 +19,8 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
-app.use("/auth", userRoutes)
+app.use("/auth", userRoutes);
+app.use("/mail", mailRoutes);
 
 
 app.listen(port, hostname, () => {
